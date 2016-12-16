@@ -62,6 +62,19 @@ spec = describe "Client" $ do
         res <- httpLbs "http://httpbin.org" man
         (statusCode.responseStatus) res `shouldBe` 201
 
+      it "modifies the response body" $ do
+        let modify :: Response BodyReader -> IO (Response BodyReader)
+            modify res = do
+              return res {
+                responseBody = do
+                  reader <- constBodyReader [BS.pack "modified response body"]
+                  reader
+              }
+            settings = defaultManagerSettings { managerModifyResponse = modify }
+        man <- newManager settings
+        res <- httpLbs "http://httpbin.org" man
+        responseBody res `shouldBe` "modified response body"
+
     context "managerModifyRequest" $ do
         it "port" $ do
             let modify req = return req { port = 80 }
